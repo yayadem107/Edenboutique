@@ -1,0 +1,6284 @@
+openapi: 3.0.3
+info:
+  title: Eden Boutique – API de gestion de stock
+  version: 1.0.0
+  description: 'API de la boutique de vêtements et articles pour enfants (0–15 ans).
+    Authentification : `POST /api/auth/login/` puis en-tête `Authorization: Bearer
+    <access>`. Voir docs/API.md pour le guide complet.'
+paths:
+  /api/age-ranges/:
+    get:
+      operationId: age_ranges_list
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgeRange'
+          description: ''
+    post:
+      operationId: age_ranges_create
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgeRangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgeRangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgeRangeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgeRange'
+          description: ''
+  /api/age-ranges/{id}/:
+    get:
+      operationId: age_ranges_retrieve
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) tranche d'âge.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgeRange'
+          description: ''
+    put:
+      operationId: age_ranges_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) tranche d'âge.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgeRangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AgeRangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AgeRangeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgeRange'
+          description: ''
+    patch:
+      operationId: age_ranges_partial_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) tranche d'âge.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAgeRangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAgeRangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAgeRangeRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgeRange'
+          description: ''
+    delete:
+      operationId: age_ranges_destroy
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) tranche d'âge.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/articles/:
+    get:
+      operationId: articles_list
+      description: Les articles archivés sont exclus sauf si `is_archived=true`.
+      summary: Liste des articles (filtres, recherche, tri)
+      parameters:
+      - in: query
+        name: age_months
+        schema:
+          type: number
+        description: Articles adaptés à un enfant de N mois (ex. 30 = 2 ans et demi).
+      - in: query
+        name: age_range
+        schema:
+          type: integer
+      - in: query
+        name: article_type
+        schema:
+          type: array
+          items:
+            type: string
+            title: Type d'article
+            enum:
+            - ACCESSORY
+            - CHILDCARE
+            - CLOTHING
+            - FEEDING
+            - HYGIENE
+            - SAFETY
+            - SHOES
+            - TOY
+            - UNDERWEAR
+        description: |-
+          * `CLOTHING` - Vêtement
+          * `UNDERWEAR` - Sous-vêtement
+          * `SHOES` - Chaussures
+          * `ACCESSORY` - Accessoire
+          * `CHILDCARE` - Puériculture et sommeil
+          * `FEEDING` - Repas et alimentation
+          * `HYGIENE` - Hygiène et soins
+          * `SAFETY` - Sorties et sécurité
+          * `TOY` - Jouet et éveil
+        explode: true
+        style: form
+      - in: query
+        name: brand
+        schema:
+          type: string
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: gender
+        schema:
+          type: array
+          items:
+            type: string
+            title: Genre
+            enum:
+            - BOY
+            - GIRL
+            - UNISEX
+        description: |-
+          * `GIRL` - Fille
+          * `BOY` - Garçon
+          * `UNISEX` - Mixte
+        explode: true
+        style: form
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+      - in: query
+        name: is_regulated
+        schema:
+          type: boolean
+      - in: query
+        name: max_price
+        schema:
+          type: number
+      - in: query
+        name: min_price
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: stock_status
+        schema:
+          type: string
+          enum:
+          - AVAILABLE
+          - LOW
+          - OK
+          - OUT
+        description: |-
+          * `OUT` - Rupture
+          * `LOW` - Stock faible
+          * `OK` - Disponible
+          * `AVAILABLE` - En stock (faible ou non)
+      - in: query
+        name: supplier
+        schema:
+          type: integer
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleList'
+          description: ''
+    post:
+      operationId: articles_create
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Créer un article (avec ses variantes et son stock initial)
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+  /api/articles/{id}/:
+    get:
+      operationId: articles_retrieve
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Fiche article
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) article.
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+    put:
+      operationId: articles_update
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Modifier un article
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) article.
+        required: true
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+    patch:
+      operationId: articles_partial_update
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Modifier partiellement un article
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) article.
+        required: true
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+    delete:
+      operationId: articles_destroy
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: 'Supprimer un article jamais vendu ni mouvementé (sinon : archiver)'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) article.
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/articles/{id}/archive/:
+    post:
+      operationId: articles_archive_create
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Archiver un article (il n'apparaît plus à la vente)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) article.
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+  /api/articles/{id}/restore/:
+    post:
+      operationId: articles_restore_create
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Désarchiver un article
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) article.
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+  /api/articles/import/:
+    post:
+      operationId: articles_import_create
+      description: 'Fichier `.xlsx` ou `.csv` (séparateur `;` ou `,`), une ligne par
+        variante. Modèle : `GET /api/articles/import-template/`. Ajouter `dry_run=true`
+        pour vérifier le fichier sans rien enregistrer. Tout ou rien : en cas d''erreur,
+        aucune ligne n''est enregistrée.'
+      summary: Importer des articles et du stock depuis un fichier Excel ou CSV
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+          description: ''
+  /api/articles/import-template/:
+    get:
+      operationId: articles_import_template_retrieve
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Télécharger le modèle de fichier d'import (CSV)
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/audit-logs/:
+    get:
+      operationId: audit_logs_list
+      summary: Journal d'audit (admin)
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+          enum:
+          - ARCHIVE
+          - CASH_REPORT
+          - CREATE
+          - DELETE
+          - LOGIN
+          - LOGIN_FAILED
+          - LOGOUT
+          - PASSWORD_CHANGED
+          - PASSWORD_RESET
+          - RESTORE
+          - SALE_CANCELLED
+          - SALE_CREATED
+          - STOCK_IMPORT
+          - STOCK_MOVEMENT
+          - UPDATE
+        description: |-
+          * `LOGIN` - Connexion
+          * `LOGIN_FAILED` - Échec de connexion
+          * `LOGOUT` - Déconnexion
+          * `PASSWORD_CHANGED` - Mot de passe modifié
+          * `PASSWORD_RESET` - Mot de passe réinitialisé par l'admin
+          * `CREATE` - Création
+          * `UPDATE` - Modification
+          * `DELETE` - Suppression
+          * `ARCHIVE` - Archivage
+          * `RESTORE` - Restauration
+          * `STOCK_MOVEMENT` - Mouvement de stock
+          * `STOCK_IMPORT` - Import de fichier
+          * `SALE_CREATED` - Vente enregistrée
+          * `SALE_CANCELLED` - Vente annulée
+          * `CASH_REPORT` - Compte rendu de caisse
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: target_id
+        schema:
+          type: string
+      - in: query
+        name: target_type
+        schema:
+          type: string
+      - in: query
+        name: user
+        schema:
+          type: integer
+      tags:
+      - Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/audit-logs/{id}/:
+    get:
+      operationId: audit_logs_retrieve
+      summary: Détail d'une entrée du journal
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) entrée du
+          journal d'audit.
+        required: true
+      tags:
+      - Audit
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+          description: ''
+  /api/auth/change-password/:
+    post:
+      operationId: auth_change_password_create
+      description: Déconnecte les autres appareils et renvoie de nouveaux tokens.
+      summary: Changer son mot de passe
+      tags:
+      - Authentification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Connexion par identifiant + mot de passe. Limité à 10 tentatives
+        par minute.
+      summary: Se connecter
+      tags:
+      - Authentification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      summary: Se déconnecter
+      tags:
+      - Authentification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: Déconnecté
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      summary: Profil et droits de l'utilisateur connecté
+      tags:
+      - Authentification
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      summary: Renouveler le token d'accès
+      tags:
+      - Authentification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+          description: ''
+  /api/cash-reports/:
+    get:
+      operationId: cash_reports_list
+      summary: Comptes rendus de caisse (les siens pour un caissier, tous pour l'admin)
+      parameters:
+      - in: query
+        name: cashier
+        schema:
+          type: integer
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - in: query
+        name: report_date
+        schema:
+          type: string
+          format: date
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          title: Statut
+          enum:
+          - REVIEWED
+          - SUBMITTED
+        description: |-
+          * `SUBMITTED` - Envoyé
+          * `REVIEWED` - Vérifié par l'administrateur
+      tags:
+      - Comptes rendus de caisse
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCashReportList'
+          description: ''
+    post:
+      operationId: cash_reports_create
+      description: Le caissier saisit l'argent compté et un commentaire ; les totaux
+        sont calculés par le serveur.
+      summary: Envoyer le compte rendu de caisse de la journée
+      tags:
+      - Comptes rendus de caisse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CashReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CashReportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashReport'
+          description: ''
+  /api/cash-reports/{id}/:
+    get:
+      operationId: cash_reports_retrieve
+      summary: Détail d'un compte rendu
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) compte rendu
+          de caisse.
+        required: true
+      tags:
+      - Comptes rendus de caisse
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashReport'
+          description: ''
+    put:
+      operationId: cash_reports_update
+      summary: Corriger son compte rendu (tant qu'il n'est pas vérifié)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) compte rendu
+          de caisse.
+        required: true
+      tags:
+      - Comptes rendus de caisse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CashReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CashReportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashReport'
+          description: ''
+    patch:
+      operationId: cash_reports_partial_update
+      summary: Corriger son compte rendu (tant qu'il n'est pas vérifié)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) compte rendu
+          de caisse.
+        required: true
+      tags:
+      - Comptes rendus de caisse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCashReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCashReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCashReportRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashReport'
+          description: ''
+  /api/cash-reports/{id}/review/:
+    post:
+      operationId: cash_reports_review_create
+      summary: Valider un compte rendu (administrateur)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) compte rendu
+          de caisse.
+        required: true
+      tags:
+      - Comptes rendus de caisse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashReportReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CashReportReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CashReportReviewRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashReport'
+          description: ''
+        '400':
+          description: Déjà vérifié
+  /api/cash-reports/preview/:
+    get:
+      operationId: cash_reports_preview_retrieve
+      summary: Aperçu des chiffres de la journée avant d'envoyer le compte rendu
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+        description: AAAA-MM-JJ (aujourd'hui par défaut)
+      tags:
+      - Comptes rendus de caisse
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSummary'
+          description: ''
+  /api/categories/:
+    get:
+      operationId: categories_list
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: query
+        name: default_article_type
+        schema:
+          type: string
+          title: Type d'article par défaut
+          enum:
+          - ACCESSORY
+          - CHILDCARE
+          - CLOTHING
+          - FEEDING
+          - HYGIENE
+          - SAFETY
+          - SHOES
+          - TOY
+          - UNDERWEAR
+        description: |-
+          Pré-remplit le type lors de la création d'un article dans cette catégorie.
+
+          * `CLOTHING` - Vêtement
+          * `UNDERWEAR` - Sous-vêtement
+          * `SHOES` - Chaussures
+          * `ACCESSORY` - Accessoire
+          * `CHILDCARE` - Puériculture et sommeil
+          * `FEEDING` - Repas et alimentation
+          * `HYGIENE` - Hygiène et soins
+          * `SAFETY` - Sorties et sécurité
+          * `TOY` - Jouet et éveil
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - in: query
+        name: parent__isnull
+        schema:
+          type: boolean
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: categories_create
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/categories/{id}/:
+    get:
+      operationId: categories_retrieve
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) catégorie.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: categories_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) catégorie.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) catégorie.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: categories_destroy
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) catégorie.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/categories/tree/:
+    get:
+      operationId: categories_tree_list
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      summary: Arbre des catégories (principales + sous-catégories)
+      parameters:
+      - in: query
+        name: default_article_type
+        schema:
+          type: string
+          title: Type d'article par défaut
+          enum:
+          - ACCESSORY
+          - CHILDCARE
+          - CLOTHING
+          - FEEDING
+          - HYGIENE
+          - SAFETY
+          - SHOES
+          - TOY
+          - UNDERWEAR
+        description: |-
+          Pré-remplit le type lors de la création d'un article dans cette catégorie.
+
+          * `CLOTHING` - Vêtement
+          * `UNDERWEAR` - Sous-vêtement
+          * `SHOES` - Chaussures
+          * `ACCESSORY` - Accessoire
+          * `CHILDCARE` - Puériculture et sommeil
+          * `FEEDING` - Repas et alimentation
+          * `HYGIENE` - Hygiène et soins
+          * `SAFETY` - Sorties et sécurité
+          * `TOY` - Jouet et éveil
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - in: query
+        name: parent__isnull
+        schema:
+          type: boolean
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryTree'
+          description: ''
+  /api/colors/:
+    get:
+      operationId: colors_list
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Color'
+          description: ''
+    post:
+      operationId: colors_create
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+  /api/colors/{id}/:
+    get:
+      operationId: colors_retrieve
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) couleur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+    put:
+      operationId: colors_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) couleur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+    patch:
+      operationId: colors_partial_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) couleur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedColorRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+    delete:
+      operationId: colors_destroy
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) couleur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/dashboard/summary/:
+    get:
+      operationId: dashboard_summary_retrieve
+      description: 'Base des rapports : lecture seule pour tout utilisateur connecté.'
+      summary: Indicateurs du tableau de bord
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+        description: Début (AAAA-MM-JJ)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+        description: Fin incluse (AAAA-MM-JJ)
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - custom
+          - last_month
+          - month
+          - today
+          - week
+          - year
+          - yesterday
+        description: 'Période (par défaut : today). `custom` exige date_from.'
+      tags:
+      - Tableau de bord
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: Vérifie que l'API et la base de données répondent (utile pour Docker
+        et le frontend).
+      tags:
+      - Système
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+  /api/notifications/:
+    get:
+      operationId: notifications_list
+      description: Chaque utilisateur ne voit que ses propres notifications.
+      parameters:
+      - in: query
+        name: is_read
+        schema:
+          type: boolean
+      - in: query
+        name: level
+        schema:
+          type: string
+          title: Niveau
+          enum:
+          - danger
+          - info
+          - warning
+        description: |-
+          * `info` - Information
+          * `warning` - Attention
+          * `danger` - Urgent
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - CASH_REPORT
+          - LOW_STOCK
+          - OUT_OF_STOCK
+          - SALE
+          - SALE_CANCELLED
+          - SENSITIVE_ACTION
+        description: |-
+          * `SALE` - Nouvelle vente
+          * `SALE_CANCELLED` - Vente annulée
+          * `LOW_STOCK` - Stock faible
+          * `OUT_OF_STOCK` - Rupture de stock
+          * `CASH_REPORT` - Compte rendu de caisse
+          * `SENSITIVE_ACTION` - Action sensible
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/notifications/{id}/:
+    get:
+      operationId: notifications_retrieve
+      description: Chaque utilisateur ne voit que ses propres notifications.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) notification.
+        required: true
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/{id}/mark-read/:
+    post:
+      operationId: notifications_mark_read_create
+      description: Chaque utilisateur ne voit que ses propres notifications.
+      summary: Marquer une notification comme lue
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) notification.
+        required: true
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/mark-all-read/:
+    post:
+      operationId: notifications_mark_all_read_create
+      description: Chaque utilisateur ne voit que ses propres notifications.
+      summary: Marquer toutes les notifications comme lues
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkAllRead'
+          description: ''
+  /api/notifications/unread-count/:
+    get:
+      operationId: notifications_unread_count_retrieve
+      description: Chaque utilisateur ne voit que ses propres notifications.
+      summary: Nombre de notifications non lues (à interroger régulièrement)
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCount'
+          description: ''
+  /api/reports/cashiers/:
+    get:
+      operationId: reports_cashiers_retrieve
+      description: Un caissier ne voit que sa propre ligne (sauf réglage CASHIERS_SEE_ALL_SALES).
+      summary: Ventes par caissier
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+        description: Début (AAAA-MM-JJ)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+        description: Fin incluse (AAAA-MM-JJ)
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+        description: '`csv` pour télécharger le rapport'
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - custom
+          - last_month
+          - month
+          - today
+          - week
+          - year
+          - yesterday
+        description: 'Période (par défaut : today). `custom` exige date_from.'
+      tags:
+      - Rapports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/reports/sales/:
+    get:
+      operationId: reports_sales_retrieve
+      description: 'Base des rapports : lecture seule pour tout utilisateur connecté.'
+      summary: Rapport des ventes (chiffre d'affaires par jour ou par mois)
+      parameters:
+      - in: query
+        name: cashier
+        schema:
+          type: integer
+        description: Filtrer sur un caissier (admin)
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+        description: Début (AAAA-MM-JJ)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+        description: Fin incluse (AAAA-MM-JJ)
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+        description: '`csv` pour télécharger le rapport'
+      - in: query
+        name: group_by
+        schema:
+          type: string
+          enum:
+          - day
+          - month
+      - in: query
+        name: payment_method
+        schema:
+          type: string
+        description: CASH, MOBILE_MONEY, CARD…
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - custom
+          - last_month
+          - month
+          - today
+          - week
+          - year
+          - yesterday
+        description: 'Période (par défaut : today). `custom` exige date_from.'
+      tags:
+      - Rapports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/reports/stock/:
+    get:
+      operationId: reports_stock_retrieve
+      description: L'export CSV contient une ligne par variante. La valeur au prix
+        d'achat est réservée à l'admin.
+      summary: 'État du stock : quantités, ruptures, valeur du stock'
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+        description: '`csv` pour télécharger le rapport'
+      - in: query
+        name: stock_status
+        schema:
+          type: string
+          enum:
+          - LOW
+          - OK
+          - OUT
+      tags:
+      - Rapports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/reports/top-articles/:
+    get:
+      operationId: reports_top_articles_retrieve
+      description: 'Base des rapports : lecture seule pour tout utilisateur connecté.'
+      summary: Articles les plus vendus
+      parameters:
+      - in: query
+        name: cashier
+        schema:
+          type: integer
+        description: Filtrer sur un caissier (admin)
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Catégorie (inclut les sous-catégories)
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+        description: Début (AAAA-MM-JJ)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+        description: Fin incluse (AAAA-MM-JJ)
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+        description: '`csv` pour télécharger le rapport'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Nombre d'articles (défaut 10, max 100)
+      - in: query
+        name: payment_method
+        schema:
+          type: string
+        description: CASH, MOBILE_MONEY, CARD…
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - custom
+          - last_month
+          - month
+          - today
+          - week
+          - year
+          - yesterday
+        description: 'Période (par défaut : today). `custom` exige date_from.'
+      tags:
+      - Rapports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/sales/:
+    get:
+      operationId: sales_list
+      description: Un caissier ne voit que ses propres ventes (sauf réglage CASHIERS_SEE_ALL_SALES).
+      summary: Liste des ventes
+      parameters:
+      - in: query
+        name: article
+        schema:
+          type: integer
+      - in: query
+        name: cashier
+        schema:
+          type: integer
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+        description: '`csv` pour télécharger'
+      - in: query
+        name: has_discount
+        schema:
+          type: boolean
+      - in: query
+        name: max_total
+        schema:
+          type: number
+      - in: query
+        name: min_total
+        schema:
+          type: number
+      - in: query
+        name: number
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - in: query
+        name: payment_method
+        schema:
+          type: string
+          title: Moyen de paiement
+          enum:
+          - BANK_TRANSFER
+          - CARD
+          - CASH
+          - MOBILE_MONEY
+          - OTHER
+        description: |-
+          * `CASH` - Espèces
+          * `MOBILE_MONEY` - Mobile Money
+          * `CARD` - Carte bancaire
+          * `BANK_TRANSFER` - Virement
+          * `OTHER` - Autre
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          title: Statut
+          enum:
+          - CANCELLED
+          - COMPLETED
+        description: |-
+          * `COMPLETED` - Validée
+          * `CANCELLED` - Annulée
+      - in: query
+        name: variant
+        schema:
+          type: integer
+      tags:
+      - Ventes
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSaleListList'
+          description: ''
+    post:
+      operationId: sales_create
+      description: Les prix sont calculés par le serveur. Le stock est décrémenté
+        dans la même transaction ; si un seul article manque, rien n'est enregistré.
+        Réponse 201 pour une nouvelle vente, 200 si ce `client_request_id` a déjà
+        été traité (pas de doublon).
+      summary: Enregistrer une vente
+      tags:
+      - Ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaleCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaleCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/sales/{id}/:
+    get:
+      operationId: sales_retrieve
+      description: 'Une vente ne se modifie pas et ne se supprime pas : elle s''annule
+        (administrateur).'
+      summary: Détail d'une vente (ticket)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) vente.
+        required: true
+      tags:
+      - Ventes
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/sales/{id}/cancel/:
+    post:
+      operationId: sales_cancel_create
+      description: 'Une vente ne se modifie pas et ne se supprime pas : elle s''annule
+        (administrateur).'
+      summary: Annuler une vente (administrateur) — remet les articles en stock
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) vente.
+        required: true
+      tags:
+      - Ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleCancelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaleCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaleCancelRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/sizes/:
+    get:
+      operationId: sizes_list
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: system
+        schema:
+          type: string
+          title: Système
+          enum:
+          - AGE
+          - HEIGHT
+          - ONE_SIZE
+          - OTHER
+          - SHOES
+        description: |-
+          * `AGE` - Taille en âge (3M, 4A…)
+          * `HEIGHT` - Taille en cm (86, 104…)
+          * `SHOES` - Pointure
+          * `ONE_SIZE` - Taille unique
+          * `OTHER` - Autre
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Size'
+          description: ''
+    post:
+      operationId: sizes_create
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SizeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SizeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SizeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+          description: ''
+  /api/sizes/{id}/:
+    get:
+      operationId: sizes_retrieve
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) taille.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+          description: ''
+    put:
+      operationId: sizes_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) taille.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SizeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SizeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SizeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+          description: ''
+    patch:
+      operationId: sizes_partial_update
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) taille.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSizeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSizeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSizeRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+          description: ''
+    delete:
+      operationId: sizes_destroy
+      description: Référentiel lisible par tous, modifiable par l'administrateur,
+        tracé dans l'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) taille.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/stock-movements/:
+    get:
+      operationId: stock_movements_list
+      description: |-
+        Lecture : tous les utilisateurs connectés.
+        Saisie (entrée, sortie justifiée, inventaire) : administrateur uniquement.
+      summary: Historique des mouvements de stock
+      parameters:
+      - in: query
+        name: article
+        schema:
+          type: integer
+      - in: query
+        name: category
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - Entrées
+          * `out` - Sorties
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+        description: '`csv` pour télécharger'
+      - in: query
+        name: lot_number
+        schema:
+          type: string
+      - in: query
+        name: movement_type
+        schema:
+          type: string
+          title: Type
+          enum:
+          - ADJUST_IN
+          - ADJUST_OUT
+          - CUSTOMER_RETURN
+          - LOSS
+          - PURCHASE
+          - SALE
+          - SALE_CANCEL
+          - SUPPLIER_RETURN
+        description: |-
+          * `PURCHASE` - Entrée – réception fournisseur
+          * `CUSTOMER_RETURN` - Entrée – retour client
+          * `ADJUST_IN` - Entrée – ajustement d'inventaire
+          * `SALE` - Sortie – vente
+          * `SALE_CANCEL` - Entrée – annulation de vente
+          * `ADJUST_OUT` - Sortie – ajustement d'inventaire
+          * `LOSS` - Sortie – perte, casse ou vol
+          * `SUPPLIER_RETURN` - Sortie – retour fournisseur
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - in: query
+        name: sale
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: user
+        schema:
+          type: integer
+      - in: query
+        name: variant
+        schema:
+          type: integer
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockMovementList'
+          description: ''
+    post:
+      operationId: stock_movements_create
+      description: |-
+        Lecture : tous les utilisateurs connectés.
+        Saisie (entrée, sortie justifiée, inventaire) : administrateur uniquement.
+      summary: Saisir un mouvement (entrée, sortie justifiée, perte…)
+      tags:
+      - Stock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StockMovementCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockMovementCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+          description: ''
+  /api/stock-movements/{id}/:
+    get:
+      operationId: stock_movements_retrieve
+      description: |-
+        Lecture : tous les utilisateurs connectés.
+        Saisie (entrée, sortie justifiée, inventaire) : administrateur uniquement.
+      summary: Détail d'un mouvement
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) mouvement
+          de stock.
+        required: true
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+          description: ''
+  /api/stock-movements/inventory-count/:
+    post:
+      operationId: stock_movements_inventory_count_create
+      description: Le serveur crée l'ajustement correspondant à l'écart. Renvoie 200
+        sans mouvement si le stock est juste.
+      summary: 'Inventaire : saisir la quantité comptée en rayon'
+      tags:
+      - Stock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryCountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InventoryCountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InventoryCountRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+          description: ''
+  /api/stock-movements/reception/:
+    post:
+      operationId: stock_movements_reception_create
+      description: |-
+        Lecture : tous les utilisateurs connectés.
+        Saisie (entrée, sortie justifiée, inventaire) : administrateur uniquement.
+      summary: Réceptionner une livraison (plusieurs articles d'un coup)
+      parameters:
+      - in: query
+        name: article
+        schema:
+          type: integer
+      - in: query
+        name: category
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - Entrées
+          * `out` - Sorties
+      - in: query
+        name: lot_number
+        schema:
+          type: string
+      - in: query
+        name: movement_type
+        schema:
+          type: string
+          title: Type
+          enum:
+          - ADJUST_IN
+          - ADJUST_OUT
+          - CUSTOMER_RETURN
+          - LOSS
+          - PURCHASE
+          - SALE
+          - SALE_CANCEL
+          - SUPPLIER_RETURN
+        description: |-
+          * `PURCHASE` - Entrée – réception fournisseur
+          * `CUSTOMER_RETURN` - Entrée – retour client
+          * `ADJUST_IN` - Entrée – ajustement d'inventaire
+          * `SALE` - Sortie – vente
+          * `SALE_CANCEL` - Entrée – annulation de vente
+          * `ADJUST_OUT` - Sortie – ajustement d'inventaire
+          * `LOSS` - Sortie – perte, casse ou vol
+          * `SUPPLIER_RETURN` - Sortie – retour fournisseur
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - in: query
+        name: sale
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: user
+        schema:
+          type: integer
+      - in: query
+        name: variant
+        schema:
+          type: integer
+      tags:
+      - Stock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReceptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReceptionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockMovementList'
+          description: ''
+  /api/suppliers/:
+    get:
+      operationId: suppliers_list
+      description: 'Fournisseurs : réservés à l''administrateur (informations d''achat).'
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupplierList'
+          description: ''
+    post:
+      operationId: suppliers_create
+      description: 'Fournisseurs : réservés à l''administrateur (informations d''achat).'
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+  /api/suppliers/{id}/:
+    get:
+      operationId: suppliers_retrieve
+      description: 'Fournisseurs : réservés à l''administrateur (informations d''achat).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) fournisseur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    put:
+      operationId: suppliers_update
+      description: 'Fournisseurs : réservés à l''administrateur (informations d''achat).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) fournisseur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    patch:
+      operationId: suppliers_partial_update
+      description: 'Fournisseurs : réservés à l''administrateur (informations d''achat).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) fournisseur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    delete:
+      operationId: suppliers_destroy
+      description: 'Fournisseurs : réservés à l''administrateur (informations d''achat).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) fournisseur.
+        required: true
+      tags:
+      - Catalogue – référentiels
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/:
+    get:
+      operationId: users_list
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Liste des comptes
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+          title: Rôle
+          enum:
+          - ADMIN
+          - CASHIER
+        description: |-
+          * `ADMIN` - Super administrateur
+          * `CASHIER` - Caissier
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      tags:
+      - Utilisateurs (admin)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminUserList'
+          description: ''
+    post:
+      operationId: users_create
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Créer un compte (caissier ou administrateur)
+      tags:
+      - Utilisateurs (admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminUserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+          description: ''
+  /api/users/{id}/:
+    get:
+      operationId: users_retrieve
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Détail d'un compte
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) utilisateur.
+        required: true
+      tags:
+      - Utilisateurs (admin)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+          description: ''
+    put:
+      operationId: users_update
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Modifier un compte
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) utilisateur.
+        required: true
+      tags:
+      - Utilisateurs (admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminUserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+          description: ''
+    patch:
+      operationId: users_partial_update
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Modifier partiellement un compte
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) utilisateur.
+        required: true
+      tags:
+      - Utilisateurs (admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUserRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+          description: ''
+  /api/users/{id}/activate/:
+    post:
+      operationId: users_activate_create
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Réactiver un compte
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) utilisateur.
+        required: true
+      tags:
+      - Utilisateurs (admin)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+          description: ''
+  /api/users/{id}/deactivate/:
+    post:
+      operationId: users_deactivate_create
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Désactiver un compte (bloque la connexion)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) utilisateur.
+        required: true
+      tags:
+      - Utilisateurs (admin)
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+          description: ''
+  /api/users/{id}/reset-password/:
+    post:
+      operationId: users_reset_password_create
+      description: |-
+        Les comptes ne sont jamais supprimés (l'historique des ventes doit rester lisible) :
+        on les désactive.
+      summary: Réinitialiser le mot de passe d'un compte
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) utilisateur.
+        required: true
+      tags:
+      - Utilisateurs (admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: Mot de passe réinitialisé
+  /api/variants/:
+    get:
+      operationId: variants_list
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Liste des variantes (taille × couleur) avec leur stock
+      parameters:
+      - in: query
+        name: article
+        schema:
+          type: integer
+      - in: query
+        name: article_type
+        schema:
+          type: array
+          items:
+            type: string
+            title: Type d'article
+            enum:
+            - ACCESSORY
+            - CHILDCARE
+            - CLOTHING
+            - FEEDING
+            - HYGIENE
+            - SAFETY
+            - SHOES
+            - TOY
+            - UNDERWEAR
+        description: |-
+          * `CLOTHING` - Vêtement
+          * `UNDERWEAR` - Sous-vêtement
+          * `SHOES` - Chaussures
+          * `ACCESSORY` - Accessoire
+          * `CHILDCARE` - Puériculture et sommeil
+          * `FEEDING` - Repas et alimentation
+          * `HYGIENE` - Hygiène et soins
+          * `SAFETY` - Sorties et sécurité
+          * `TOY` - Jouet et éveil
+        explode: true
+        style: form
+      - in: query
+        name: barcode
+        schema:
+          type: string
+      - in: query
+        name: category
+        schema:
+          type: number
+      - in: query
+        name: color
+        schema:
+          type: integer
+      - in: query
+        name: gender
+        schema:
+          type: array
+          items:
+            type: string
+            title: Genre
+            enum:
+            - BOY
+            - GIRL
+            - UNISEX
+        description: |-
+          * `GIRL` - Fille
+          * `BOY` - Garçon
+          * `UNISEX` - Mixte
+        explode: true
+        style: form
+      - in: query
+        name: include_archived
+        schema:
+          type: boolean
+        description: Inclure les variantes d'articles archivés.
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Quel champ utiliser pour classer les résultats.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un terme de recherche.
+        schema:
+          type: string
+      - in: query
+        name: size
+        schema:
+          type: integer
+      - in: query
+        name: sku
+        schema:
+          type: string
+      - in: query
+        name: stock_status
+        schema:
+          type: string
+          enum:
+          - AVAILABLE
+          - LOW
+          - OK
+          - OUT
+        description: |-
+          * `OUT` - Rupture
+          * `LOW` - Stock faible
+          * `OK` - Disponible
+          * `AVAILABLE` - En stock (faible ou non)
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleVariantList'
+          description: ''
+    post:
+      operationId: variants_create
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Ajouter une variante à un article (stock à 0, utiliser une entrée de
+        stock ensuite)
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleVariantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleVariantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleVariantRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleVariant'
+          description: ''
+  /api/variants/{id}/:
+    get:
+      operationId: variants_retrieve
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) variante.
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleVariant'
+          description: ''
+    put:
+      operationId: variants_update
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) variante.
+        required: true
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleVariantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleVariantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleVariantRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleVariant'
+          description: ''
+    patch:
+      operationId: variants_partial_update
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) variante.
+        required: true
+      tags:
+      - Catalogue – articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleVariantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleVariantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleVariantRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleVariant'
+          description: ''
+    delete:
+      operationId: variants_destroy
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) variante.
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/variants/lookup/:
+    get:
+      operationId: variants_lookup_retrieve
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Retrouver une variante par code-barres ou SKU (douchette / caisse)
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: Code-barres ou SKU scanné
+        required: true
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleVariant'
+          description: ''
+  /api/variants/low-stock/:
+    get:
+      operationId: variants_low_stock_retrieve
+      description: |-
+        À ajouter aux ViewSets d'administration : chaque création, modification
+        et suppression est automatiquement inscrite au journal d'audit.
+      summary: Variantes en stock faible ou en rupture
+      tags:
+      - Catalogue – articles
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleVariant'
+          description: ''
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - LOGIN
+      - LOGIN_FAILED
+      - LOGOUT
+      - PASSWORD_CHANGED
+      - PASSWORD_RESET
+      - CREATE
+      - UPDATE
+      - DELETE
+      - ARCHIVE
+      - RESTORE
+      - STOCK_MOVEMENT
+      - STOCK_IMPORT
+      - SALE_CREATED
+      - SALE_CANCELLED
+      - CASH_REPORT
+      type: string
+      description: |-
+        * `LOGIN` - Connexion
+        * `LOGIN_FAILED` - Échec de connexion
+        * `LOGOUT` - Déconnexion
+        * `PASSWORD_CHANGED` - Mot de passe modifié
+        * `PASSWORD_RESET` - Mot de passe réinitialisé par l'admin
+        * `CREATE` - Création
+        * `UPDATE` - Modification
+        * `DELETE` - Suppression
+        * `ARCHIVE` - Archivage
+        * `RESTORE` - Restauration
+        * `STOCK_MOVEMENT` - Mouvement de stock
+        * `STOCK_IMPORT` - Import de fichier
+        * `SALE_CREATED` - Vente enregistrée
+        * `SALE_CANCELLED` - Vente annulée
+        * `CASH_REPORT` - Compte rendu de caisse
+    AdminUser:
+      type: object
+      description: Gestion des comptes par l'administrateur.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Nom d’utilisateur
+          description: Requis. 150 caractères maximum. Uniquement des lettres, nombres
+            et les caractères « @ », « . », « + », « - » et « _ ».
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        full_name:
+          type: string
+          title: Nom complet
+          maxLength: 150
+        phone:
+          type: string
+          title: Téléphone
+          maxLength: 30
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+        role_label:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Actif
+          description: Précise si l’utilisateur doit être considéré comme actif. Décochez
+            ceci plutôt que de supprimer le compte.
+        must_change_password:
+          type: boolean
+          readOnly: true
+          title: Doit changer son mot de passe
+          description: Activé quand l'administrateur crée le compte ou réinitialise
+            le mot de passe.
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Dernière connexion
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date d’inscription
+      required:
+      - date_joined
+      - full_name
+      - id
+      - is_active
+      - last_login
+      - must_change_password
+      - role_label
+      - username
+    AdminUserRequest:
+      type: object
+      description: Gestion des comptes par l'administrateur.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: Nom d’utilisateur
+          description: Requis. 150 caractères maximum. Uniquement des lettres, nombres
+            et les caractères « @ », « . », « + », « - » et « _ ».
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        full_name:
+          type: string
+          minLength: 1
+          title: Nom complet
+          maxLength: 150
+        phone:
+          type: string
+          title: Téléphone
+          maxLength: 30
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Obligatoire à la création. L'utilisateur devra le changer à
+            sa première connexion.
+      required:
+      - full_name
+      - username
+    AgeRange:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        label:
+          type: string
+          title: Libellé
+          maxLength: 50
+        min_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Âge minimum (mois)
+        max_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Âge maximum (mois)
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+      required:
+      - id
+      - label
+      - max_months
+      - min_months
+    AgeRangeRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+          title: Libellé
+          maxLength: 50
+        min_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Âge minimum (mois)
+        max_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Âge maximum (mois)
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+      required:
+      - label
+      - max_months
+      - min_months
+    Article:
+      type: object
+      description: Retire de la réponse les champs listés dans `admin_only_fields`
+        pour les caissiers.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nom
+          maxLength: 150
+        reference:
+          type: string
+          title: Référence
+          maxLength: 50
+        category:
+          type: integer
+          title: Catégorie
+        category_name:
+          type: string
+          readOnly: true
+        article_type:
+          allOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          title: Type d'article
+        article_type_label:
+          type: string
+          readOnly: true
+        gender:
+          allOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          title: Genre
+        gender_label:
+          type: string
+          readOnly: true
+        age_ranges:
+          type: array
+          items:
+            type: integer
+            title: Tranches d'âge
+          title: Tranches d'âge
+        age_range_labels:
+          type: array
+          items:
+            type: string
+            title: Libellé
+          readOnly: true
+        brand:
+          type: string
+          title: Marque
+          maxLength: 100
+        supplier:
+          type: integer
+          nullable: true
+          title: Fournisseur
+        supplier_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+        material:
+          type: string
+          title: Matière
+          maxLength: 150
+        care_instructions:
+          type: string
+          title: Entretien
+          maxLength: 255
+        image:
+          type: string
+          format: uri
+          nullable: true
+        purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Prix d'achat
+        sale_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Prix de vente
+        margin:
+          type: number
+          format: double
+          readOnly: true
+        is_regulated:
+          type: boolean
+          title: Soumis à réglementation
+          description: 'Si coché : norme obligatoire et numéro de lot exigé à chaque
+            réception.'
+        safety_standard:
+          type: string
+          title: Norme / conformité
+          description: ex. CE – EN 71-1, EN 14350
+          maxLength: 150
+        safety_warnings:
+          type: string
+          title: Avertissements de sécurité
+        min_age_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+          title: Âge minimum recommandé (mois)
+        attributes:
+          title: Caractéristiques spécifiques
+          description: 'Caractéristiques libres, ex. {"contenance_ml": 250, "sans_bpa":
+            true}'
+        is_archived:
+          type: boolean
+          readOnly: true
+          title: Archivé
+        archived_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Archivé le
+        total_quantity:
+          type: integer
+          readOnly: true
+          default: 0
+        stock_status:
+          allOf:
+          - $ref: '#/components/schemas/StockStatusEnum'
+          readOnly: true
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleVariant'
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Créé par
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé le
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modifié le
+      required:
+      - age_range_labels
+      - archived_at
+      - article_type_label
+      - category
+      - category_name
+      - created_at
+      - created_by
+      - gender_label
+      - id
+      - is_archived
+      - margin
+      - name
+      - purchase_price
+      - reference
+      - sale_price
+      - stock_status
+      - supplier_name
+      - total_quantity
+      - updated_at
+      - variants
+    ArticleRequest:
+      type: object
+      description: Retire de la réponse les champs listés dans `admin_only_fields`
+        pour les caissiers.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 150
+        reference:
+          type: string
+          minLength: 1
+          title: Référence
+          maxLength: 50
+        category:
+          type: integer
+          title: Catégorie
+        article_type:
+          allOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          title: Type d'article
+        gender:
+          allOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          title: Genre
+        age_ranges:
+          type: array
+          items:
+            type: integer
+            title: Tranches d'âge
+          title: Tranches d'âge
+        brand:
+          type: string
+          title: Marque
+          maxLength: 100
+        supplier:
+          type: integer
+          nullable: true
+          title: Fournisseur
+        description:
+          type: string
+        material:
+          type: string
+          title: Matière
+          maxLength: 150
+        care_instructions:
+          type: string
+          title: Entretien
+          maxLength: 255
+        image:
+          type: string
+          format: binary
+        purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Prix d'achat
+        sale_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Prix de vente
+        is_regulated:
+          type: boolean
+          title: Soumis à réglementation
+          description: 'Si coché : norme obligatoire et numéro de lot exigé à chaque
+            réception.'
+        safety_standard:
+          type: string
+          title: Norme / conformité
+          description: ex. CE – EN 71-1, EN 14350
+          maxLength: 150
+        safety_warnings:
+          type: string
+          title: Avertissements de sécurité
+        min_age_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+          title: Âge minimum recommandé (mois)
+        attributes:
+          title: Caractéristiques spécifiques
+          description: 'Caractéristiques libres, ex. {"contenance_ml": 250, "sans_bpa":
+            true}'
+        initial_variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/InitialVariantRequest'
+          writeOnly: true
+          description: 'À la création uniquement : variantes à créer avec leur stock
+            initial.'
+      required:
+      - category
+      - name
+      - purchase_price
+      - reference
+      - sale_price
+    ArticleTypeEnum:
+      enum:
+      - CLOTHING
+      - UNDERWEAR
+      - SHOES
+      - ACCESSORY
+      - CHILDCARE
+      - FEEDING
+      - HYGIENE
+      - SAFETY
+      - TOY
+      type: string
+      description: |-
+        * `CLOTHING` - Vêtement
+        * `UNDERWEAR` - Sous-vêtement
+        * `SHOES` - Chaussures
+        * `ACCESSORY` - Accessoire
+        * `CHILDCARE` - Puériculture et sommeil
+        * `FEEDING` - Repas et alimentation
+        * `HYGIENE` - Hygiène et soins
+        * `SAFETY` - Sorties et sécurité
+        * `TOY` - Jouet et éveil
+    ArticleVariant:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        article:
+          type: integer
+        article_name:
+          type: string
+          readOnly: true
+        article_reference:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+        size:
+          type: integer
+          nullable: true
+          title: Taille
+        size_label:
+          type: string
+          readOnly: true
+        color:
+          type: integer
+          nullable: true
+          title: Couleur
+        color_name:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          title: Code article (SKU)
+          description: Généré automatiquement s'il est laissé vide.
+          maxLength: 64
+        barcode:
+          type: string
+          nullable: true
+          title: Code-barres
+          maxLength: 64
+        price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+          title: Prix de vente spécifique
+          description: Laisser vide pour utiliser le prix de l'article.
+        effective_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+        quantity:
+          type: integer
+          readOnly: true
+          title: Quantité en stock
+        alert_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Seuil d'alerte
+        stock_status:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          title: Active
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé le
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modifié le
+      required:
+      - article
+      - article_name
+      - article_reference
+      - color_name
+      - created_at
+      - effective_price
+      - id
+      - label
+      - quantity
+      - size_label
+      - stock_status
+      - updated_at
+    ArticleVariantRequest:
+      type: object
+      properties:
+        article:
+          type: integer
+        size:
+          type: integer
+          nullable: true
+          title: Taille
+        color:
+          type: integer
+          nullable: true
+          title: Couleur
+        sku:
+          type: string
+          title: Code article (SKU)
+          description: Généré automatiquement s'il est laissé vide.
+          maxLength: 64
+        barcode:
+          type: string
+          nullable: true
+          title: Code-barres
+          maxLength: 64
+        price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+          title: Prix de vente spécifique
+          description: Laisser vide pour utiliser le prix de l'article.
+        alert_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Seuil d'alerte
+        is_active:
+          type: boolean
+          title: Active
+      required:
+      - article
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          nullable: true
+          title: Utilisateur
+        username:
+          type: string
+          title: Identifiant
+          description: Conservé même si le compte change.
+          maxLength: 150
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        action_label:
+          type: string
+          readOnly: true
+        target_type:
+          type: string
+          title: Type d'objet
+          maxLength: 60
+        target_id:
+          type: string
+          title: Id de l'objet
+          maxLength: 40
+        target_repr:
+          type: string
+          title: Objet
+          maxLength: 255
+        details:
+          title: Détails
+        ip_address:
+          type: string
+          nullable: true
+          title: Adresse IP
+        user_agent:
+          type: string
+          title: Navigateur
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date
+      required:
+      - action
+      - action_label
+      - created_at
+      - id
+    BlankEnum:
+      enum:
+      - ''
+    CashReport:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        cashier:
+          type: integer
+          readOnly: true
+          title: Caissier
+        cashier_name:
+          type: string
+          readOnly: true
+        report_date:
+          type: string
+          format: date
+          title: Journée
+        sales_count:
+          type: integer
+          readOnly: true
+          title: Nombre de ventes
+        cancelled_count:
+          type: integer
+          readOnly: true
+          title: Ventes annulées
+        items_sold:
+          type: integer
+          readOnly: true
+          title: Articles vendus
+        total_sales:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Chiffre d'affaires
+        total_discounts:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Remises accordées
+        totals_by_payment:
+          readOnly: true
+          title: Totaux par moyen de paiement
+        expected_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Espèces attendues
+        counted_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Espèces comptées
+        cash_difference:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Écart de caisse
+        comment:
+          type: string
+          title: Commentaire du caissier
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CashReportStatusEnum'
+          readOnly: true
+          title: Statut
+        status_label:
+          type: string
+          readOnly: true
+        reviewed_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Vérifié par
+        reviewed_by_name:
+          type: string
+          readOnly: true
+        reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Vérifié le
+        admin_comment:
+          type: string
+          readOnly: true
+          title: Commentaire de l'administrateur
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Envoyé le
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modifié le
+      required:
+      - admin_comment
+      - cancelled_count
+      - cash_difference
+      - cashier
+      - cashier_name
+      - counted_cash
+      - created_at
+      - expected_cash
+      - id
+      - items_sold
+      - reviewed_at
+      - reviewed_by
+      - reviewed_by_name
+      - sales_count
+      - status
+      - status_label
+      - total_discounts
+      - total_sales
+      - totals_by_payment
+      - updated_at
+    CashReportRequest:
+      type: object
+      properties:
+        report_date:
+          type: string
+          format: date
+          title: Journée
+        counted_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Espèces comptées
+        comment:
+          type: string
+          title: Commentaire du caissier
+      required:
+      - counted_cash
+    CashReportReviewRequest:
+      type: object
+      properties:
+        admin_comment:
+          type: string
+          default: ''
+    CashReportStatusEnum:
+      enum:
+      - SUBMITTED
+      - REVIEWED
+      type: string
+      description: |-
+        * `SUBMITTED` - Envoyé
+        * `REVIEWED` - Vérifié par l'administrateur
+    CashSummary:
+      type: object
+      properties:
+        report_date:
+          type: string
+          format: date
+        sales_count:
+          type: integer
+        cancelled_count:
+          type: integer
+        items_sold:
+          type: integer
+        total_sales:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_discounts:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        totals_by_payment:
+          type: object
+          additionalProperties:
+            type: string
+        expected_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - cancelled_count
+      - expected_cash
+      - items_sold
+      - report_date
+      - sales_count
+      - total_discounts
+      - total_sales
+      - totals_by_payment
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nom
+          maxLength: 100
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        parent:
+          type: integer
+          nullable: true
+          title: Catégorie parente
+        parent_name:
+          type: string
+          readOnly: true
+        default_article_type:
+          title: Type d'article par défaut
+          description: |-
+            Pré-remplit le type lors de la création d'un article dans cette catégorie.
+
+            * `CLOTHING` - Vêtement
+            * `UNDERWEAR` - Sous-vêtement
+            * `SHOES` - Chaussures
+            * `ACCESSORY` - Accessoire
+            * `CHILDCARE` - Puériculture et sommeil
+            * `FEEDING` - Repas et alimentation
+            * `HYGIENE` - Hygiène et soins
+            * `SAFETY` - Sorties et sécurité
+            * `TOY` - Jouet et éveil
+          oneOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        description:
+          type: string
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+        article_count:
+          type: integer
+          readOnly: true
+          default: 0
+      required:
+      - article_count
+      - id
+      - name
+      - parent_name
+      - slug
+    CategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 100
+        parent:
+          type: integer
+          nullable: true
+          title: Catégorie parente
+        default_article_type:
+          title: Type d'article par défaut
+          description: |-
+            Pré-remplit le type lors de la création d'un article dans cette catégorie.
+
+            * `CLOTHING` - Vêtement
+            * `UNDERWEAR` - Sous-vêtement
+            * `SHOES` - Chaussures
+            * `ACCESSORY` - Accessoire
+            * `CHILDCARE` - Puériculture et sommeil
+            * `FEEDING` - Repas et alimentation
+            * `HYGIENE` - Hygiène et soins
+            * `SAFETY` - Sorties et sécurité
+            * `TOY` - Jouet et éveil
+          oneOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        description:
+          type: string
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+      required:
+      - name
+    CategoryTree:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nom
+          maxLength: 100
+        slug:
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
+        default_article_type:
+          title: Type d'article par défaut
+          description: |-
+            Pré-remplit le type lors de la création d'un article dans cette catégorie.
+
+            * `CLOTHING` - Vêtement
+            * `UNDERWEAR` - Sous-vêtement
+            * `SHOES` - Chaussures
+            * `ACCESSORY` - Accessoire
+            * `CHILDCARE` - Puériculture et sommeil
+            * `FEEDING` - Repas et alimentation
+            * `HYGIENE` - Hygiène et soins
+            * `SAFETY` - Sorties et sécurité
+            * `TOY` - Jouet et éveil
+          oneOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+          readOnly: true
+      required:
+      - children
+      - id
+      - name
+    ChangePasswordRequest:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_password
+      - old_password
+    Color:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nom
+          maxLength: 50
+        hex_code:
+          type: string
+          title: Code couleur
+          description: 'ex. #FF0000'
+          maxLength: 7
+      required:
+      - id
+      - name
+    ColorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 50
+        hex_code:
+          type: string
+          title: Code couleur
+          description: 'ex. #FF0000'
+          maxLength: 7
+      required:
+      - name
+    GenderEnum:
+      enum:
+      - GIRL
+      - BOY
+      - UNISEX
+      type: string
+      description: |-
+        * `GIRL` - Fille
+        * `BOY` - Garçon
+        * `UNISEX` - Mixte
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+        database:
+          type: string
+        boutique:
+          type: string
+        currency:
+          type: string
+      required:
+      - boutique
+      - currency
+      - database
+      - status
+    ImportRequestRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        dry_run:
+          type: boolean
+      required:
+      - file
+    ImportResult:
+      type: object
+      properties:
+        dry_run:
+          type: boolean
+        success:
+          type: boolean
+        rows:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        articles_created:
+          type: integer
+        articles_updated:
+          type: integer
+        variants_created:
+          type: integer
+        units_added:
+          type: integer
+      required:
+      - articles_created
+      - articles_updated
+      - dry_run
+      - errors
+      - rows
+      - success
+      - units_added
+      - variants_created
+    InitialVariant:
+      type: object
+      properties:
+        size:
+          type: integer
+          nullable: true
+        color:
+          type: integer
+          nullable: true
+        barcode:
+          type: string
+          nullable: true
+          maxLength: 64
+        price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        alert_threshold:
+          type: integer
+          minimum: 0
+          default: 2
+        initial_quantity:
+          type: integer
+          minimum: 0
+          default: 0
+        lot_number:
+          type: string
+          default: ''
+          maxLength: 64
+    InitialVariantRequest:
+      type: object
+      properties:
+        size:
+          type: integer
+          nullable: true
+        color:
+          type: integer
+          nullable: true
+        barcode:
+          type: string
+          nullable: true
+          maxLength: 64
+        price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        alert_threshold:
+          type: integer
+          minimum: 0
+          default: 2
+        initial_quantity:
+          type: integer
+          minimum: 0
+          default: 0
+        lot_number:
+          type: string
+          default: ''
+          maxLength: 64
+    InventoryCountRequest:
+      type: object
+      description: 'Comptage physique : le serveur calcule et enregistre l''écart.'
+      properties:
+        variant:
+          type: integer
+        counted_quantity:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 1
+          default: Inventaire physique
+          maxLength: 255
+      required:
+      - counted_quantity
+      - variant
+    LevelEnum:
+      enum:
+      - info
+      - warning
+      - danger
+      type: string
+      description: |-
+        * `info` - Information
+        * `warning` - Attention
+        * `danger` - Urgent
+    LoginRequest:
+      type: object
+      description: Renvoie les tokens JWT ET le profil, pour éviter un second appel
+        au frontend.
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - access
+      - refresh
+      - user
+    LogoutRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+          description: Token de rafraîchissement à révoquer.
+      required:
+      - refresh
+    MarkAllRead:
+      type: object
+      properties:
+        updated:
+          type: integer
+      required:
+      - updated
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          readOnly: true
+        type_label:
+          type: string
+          readOnly: true
+        level:
+          allOf:
+          - $ref: '#/components/schemas/LevelEnum'
+          readOnly: true
+          title: Niveau
+        title:
+          type: string
+          readOnly: true
+          title: Titre
+        message:
+          type: string
+          readOnly: true
+        data:
+          readOnly: true
+        is_read:
+          type: boolean
+          readOnly: true
+          title: Lue
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Lue le
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date
+      required:
+      - created_at
+      - data
+      - id
+      - is_read
+      - level
+      - message
+      - read_at
+      - title
+      - type
+      - type_label
+    PaginatedAdminUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUser'
+    PaginatedArticleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+    PaginatedArticleVariantList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleVariant'
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedCashReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashReport'
+    PaginatedCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedSaleListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleList'
+    PaginatedStockMovementList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockMovement'
+    PaginatedSupplierList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+    PatchedAdminUserRequest:
+      type: object
+      description: Gestion des comptes par l'administrateur.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: Nom d’utilisateur
+          description: Requis. 150 caractères maximum. Uniquement des lettres, nombres
+            et les caractères « @ », « . », « + », « - » et « _ ».
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        full_name:
+          type: string
+          minLength: 1
+          title: Nom complet
+          maxLength: 150
+        phone:
+          type: string
+          title: Téléphone
+          maxLength: 30
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Rôle
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Obligatoire à la création. L'utilisateur devra le changer à
+            sa première connexion.
+    PatchedAgeRangeRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+          title: Libellé
+          maxLength: 50
+        min_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Âge minimum (mois)
+        max_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Âge maximum (mois)
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+    PatchedArticleRequest:
+      type: object
+      description: Retire de la réponse les champs listés dans `admin_only_fields`
+        pour les caissiers.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 150
+        reference:
+          type: string
+          minLength: 1
+          title: Référence
+          maxLength: 50
+        category:
+          type: integer
+          title: Catégorie
+        article_type:
+          allOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          title: Type d'article
+        gender:
+          allOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          title: Genre
+        age_ranges:
+          type: array
+          items:
+            type: integer
+            title: Tranches d'âge
+          title: Tranches d'âge
+        brand:
+          type: string
+          title: Marque
+          maxLength: 100
+        supplier:
+          type: integer
+          nullable: true
+          title: Fournisseur
+        description:
+          type: string
+        material:
+          type: string
+          title: Matière
+          maxLength: 150
+        care_instructions:
+          type: string
+          title: Entretien
+          maxLength: 255
+        image:
+          type: string
+          format: binary
+        purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Prix d'achat
+        sale_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Prix de vente
+        is_regulated:
+          type: boolean
+          title: Soumis à réglementation
+          description: 'Si coché : norme obligatoire et numéro de lot exigé à chaque
+            réception.'
+        safety_standard:
+          type: string
+          title: Norme / conformité
+          description: ex. CE – EN 71-1, EN 14350
+          maxLength: 150
+        safety_warnings:
+          type: string
+          title: Avertissements de sécurité
+        min_age_months:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+          title: Âge minimum recommandé (mois)
+        attributes:
+          title: Caractéristiques spécifiques
+          description: 'Caractéristiques libres, ex. {"contenance_ml": 250, "sans_bpa":
+            true}'
+        initial_variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/InitialVariantRequest'
+          writeOnly: true
+          description: 'À la création uniquement : variantes à créer avec leur stock
+            initial.'
+    PatchedArticleVariantRequest:
+      type: object
+      properties:
+        article:
+          type: integer
+        size:
+          type: integer
+          nullable: true
+          title: Taille
+        color:
+          type: integer
+          nullable: true
+          title: Couleur
+        sku:
+          type: string
+          title: Code article (SKU)
+          description: Généré automatiquement s'il est laissé vide.
+          maxLength: 64
+        barcode:
+          type: string
+          nullable: true
+          title: Code-barres
+          maxLength: 64
+        price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+          title: Prix de vente spécifique
+          description: Laisser vide pour utiliser le prix de l'article.
+        alert_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Seuil d'alerte
+        is_active:
+          type: boolean
+          title: Active
+    PatchedCashReportRequest:
+      type: object
+      properties:
+        report_date:
+          type: string
+          format: date
+          title: Journée
+        counted_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Espèces comptées
+        comment:
+          type: string
+          title: Commentaire du caissier
+    PatchedCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 100
+        parent:
+          type: integer
+          nullable: true
+          title: Catégorie parente
+        default_article_type:
+          title: Type d'article par défaut
+          description: |-
+            Pré-remplit le type lors de la création d'un article dans cette catégorie.
+
+            * `CLOTHING` - Vêtement
+            * `UNDERWEAR` - Sous-vêtement
+            * `SHOES` - Chaussures
+            * `ACCESSORY` - Accessoire
+            * `CHILDCARE` - Puériculture et sommeil
+            * `FEEDING` - Repas et alimentation
+            * `HYGIENE` - Hygiène et soins
+            * `SAFETY` - Sorties et sécurité
+            * `TOY` - Jouet et éveil
+          oneOf:
+          - $ref: '#/components/schemas/ArticleTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        description:
+          type: string
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+        is_active:
+          type: boolean
+          title: Active
+    PatchedColorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 50
+        hex_code:
+          type: string
+          title: Code couleur
+          description: 'ex. #FF0000'
+          maxLength: 7
+    PatchedSizeRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+          title: Libellé
+          maxLength: 20
+        system:
+          allOf:
+          - $ref: '#/components/schemas/SystemEnum'
+          default: AGE
+          title: Système
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+    PatchedSupplierRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 150
+        contact_name:
+          type: string
+          title: Contact
+          maxLength: 150
+        phone:
+          type: string
+          title: Téléphone
+          maxLength: 30
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          title: Adresse
+        notes:
+          type: string
+        is_active:
+          type: boolean
+          title: Actif
+    PaymentMethodEnum:
+      enum:
+      - CASH
+      - MOBILE_MONEY
+      - CARD
+      - BANK_TRANSFER
+      - OTHER
+      type: string
+      description: |-
+        * `CASH` - Espèces
+        * `MOBILE_MONEY` - Mobile Money
+        * `CARD` - Carte bancaire
+        * `BANK_TRANSFER` - Virement
+        * `OTHER` - Autre
+    ReceptionLineRequest:
+      type: object
+      properties:
+        variant:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        lot_number:
+          type: string
+          default: ''
+          maxLength: 64
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - quantity
+      - variant
+    ReceptionRequest:
+      type: object
+      description: Réception d'une livraison complète en une seule fois.
+      properties:
+        reason:
+          type: string
+          default: ''
+          description: ex. « Livraison fournisseur X, bon n°123 »
+          maxLength: 255
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceptionLineRequest'
+      required:
+      - lines
+    ResetPasswordRequest:
+      type: object
+      properties:
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_password
+    RoleEnum:
+      enum:
+      - ADMIN
+      - CASHIER
+      type: string
+      description: |-
+        * `ADMIN` - Super administrateur
+        * `CASHIER` - Caissier
+    Sale:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Numéro
+          description: ex. V20261023-00042, attribué automatiquement.
+        client_request_id:
+          type: string
+          format: uuid
+          readOnly: true
+          title: Identifiant de requête
+          description: 'UUID généré par le frontend : renvoyer la même vente deux
+            fois ne la duplique pas.'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          readOnly: true
+          title: Statut
+        status_label:
+          type: string
+          readOnly: true
+        cashier:
+          type: integer
+          readOnly: true
+          title: Caissier
+        cashier_name:
+          type: string
+          readOnly: true
+        payment_method:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethodEnum'
+          readOnly: true
+          title: Moyen de paiement
+        payment_method_label:
+          type: string
+          readOnly: true
+        payment_reference:
+          type: string
+          readOnly: true
+          title: Référence de paiement
+          description: ex. numéro de transaction Mobile Money
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Sous-total
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Total des remises
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Total à payer
+        amount_received:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          title: Montant reçu
+        change_due:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Monnaie rendue
+        customer_name:
+          type: string
+          readOnly: true
+          title: Nom du client
+        customer_phone:
+          type: string
+          readOnly: true
+          title: Téléphone du client
+        note:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleLine'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Annulée le
+        cancelled_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Annulée par
+        cancelled_by_name:
+          type: string
+          readOnly: true
+        cancellation_reason:
+          type: string
+          readOnly: true
+          title: Motif d'annulation
+      required:
+      - amount_received
+      - cancellation_reason
+      - cancelled_at
+      - cancelled_by
+      - cancelled_by_name
+      - cashier
+      - cashier_name
+      - change_due
+      - client_request_id
+      - created_at
+      - customer_name
+      - customer_phone
+      - discount_total
+      - id
+      - items_count
+      - lines
+      - note
+      - number
+      - payment_method
+      - payment_method_label
+      - payment_reference
+      - status
+      - status_label
+      - subtotal
+      - total
+    SaleCancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Motif obligatoire, conservé dans l'historique.
+          maxLength: 255
+      required:
+      - reason
+    SaleCreateRequest:
+      type: object
+      properties:
+        client_request_id:
+          type: string
+          format: uuid
+          description: 'UUID généré par le frontend au moment d''ouvrir le panier.
+            Le renvoyer en cas de nouvel essai : la vente ne sera jamais enregistrée
+            deux fois.'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
+        payment_reference:
+          type: string
+          default: ''
+          maxLength: 100
+        amount_received:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+          description: 'Montant donné par le client (espèces) : le serveur calcule
+            la monnaie à rendre.'
+        customer_name:
+          type: string
+          default: ''
+          maxLength: 150
+        customer_phone:
+          type: string
+          default: ''
+          maxLength: 30
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleLineInputRequest'
+      required:
+      - lines
+      - payment_method
+    SaleLine:
+      type: object
+      description: Retire de la réponse les champs listés dans `admin_only_fields`
+        pour les caissiers.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        variant:
+          type: integer
+          readOnly: true
+          title: Variante
+        article_name:
+          type: string
+          readOnly: true
+          title: Article
+        variant_label:
+          type: string
+          readOnly: true
+          title: Variante
+        sku:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          readOnly: true
+          title: Quantité
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Prix unitaire
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Coût unitaire
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Remise
+        discount_reason:
+          type: string
+          readOnly: true
+          title: Motif de la remise
+        line_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Total de la ligne
+      required:
+      - article_name
+      - discount_amount
+      - discount_reason
+      - id
+      - line_total
+      - quantity
+      - sku
+      - unit_cost
+      - unit_price
+      - variant
+      - variant_label
+    SaleLineInputRequest:
+      type: object
+      properties:
+        variant:
+          type: integer
+          description: id de la variante (taille × couleur) vendue
+        quantity:
+          type: integer
+          maximum: 1000
+          minimum: 1
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          default: '0.00'
+          description: Remise en montant sur la ligne (pas en %).
+        discount_reason:
+          type: string
+          default: ''
+          description: Obligatoire dès qu'une remise est accordée.
+          maxLength: 255
+      required:
+      - quantity
+      - variant
+    SaleList:
+      type: object
+      description: Version allégée pour les listes (sans le détail des lignes).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Numéro
+          description: ex. V20261023-00042, attribué automatiquement.
+        client_request_id:
+          type: string
+          format: uuid
+          readOnly: true
+          title: Identifiant de requête
+          description: 'UUID généré par le frontend : renvoyer la même vente deux
+            fois ne la duplique pas.'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          readOnly: true
+          title: Statut
+        status_label:
+          type: string
+          readOnly: true
+        cashier:
+          type: integer
+          readOnly: true
+          title: Caissier
+        cashier_name:
+          type: string
+          readOnly: true
+        payment_method:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethodEnum'
+          readOnly: true
+          title: Moyen de paiement
+        payment_method_label:
+          type: string
+          readOnly: true
+        payment_reference:
+          type: string
+          readOnly: true
+          title: Référence de paiement
+          description: ex. numéro de transaction Mobile Money
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Sous-total
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Total des remises
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Total à payer
+        amount_received:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          title: Montant reçu
+        change_due:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Monnaie rendue
+        customer_name:
+          type: string
+          readOnly: true
+          title: Nom du client
+        customer_phone:
+          type: string
+          readOnly: true
+          title: Téléphone du client
+        note:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Annulée le
+        cancelled_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Annulée par
+        cancelled_by_name:
+          type: string
+          readOnly: true
+        cancellation_reason:
+          type: string
+          readOnly: true
+          title: Motif d'annulation
+      required:
+      - amount_received
+      - cancellation_reason
+      - cancelled_at
+      - cancelled_by
+      - cancelled_by_name
+      - cashier
+      - cashier_name
+      - change_due
+      - client_request_id
+      - created_at
+      - customer_name
+      - customer_phone
+      - discount_total
+      - id
+      - items_count
+      - note
+      - number
+      - payment_method
+      - payment_method_label
+      - payment_reference
+      - status
+      - status_label
+      - subtotal
+      - total
+    SaleStatusEnum:
+      enum:
+      - COMPLETED
+      - CANCELLED
+      type: string
+      description: |-
+        * `COMPLETED` - Validée
+        * `CANCELLED` - Annulée
+    Size:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        label:
+          type: string
+          title: Libellé
+          maxLength: 20
+        system:
+          allOf:
+          - $ref: '#/components/schemas/SystemEnum'
+          default: AGE
+          title: Système
+        system_label:
+          type: string
+          readOnly: true
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+      required:
+      - id
+      - label
+      - system_label
+    SizeRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+          title: Libellé
+          maxLength: 20
+        system:
+          allOf:
+          - $ref: '#/components/schemas/SystemEnum'
+          default: AGE
+          title: Système
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          title: Ordre d'affichage
+      required:
+      - label
+    StockMovement:
+      type: object
+      description: Lecture d'un mouvement (historique).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        variant:
+          type: integer
+          readOnly: true
+          title: Variante
+        variant_label:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        article_id:
+          type: integer
+          readOnly: true
+        movement_type:
+          allOf:
+          - $ref: '#/components/schemas/StockMovementMovementTypeEnum'
+          readOnly: true
+          title: Type
+        movement_type_label:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          readOnly: true
+          title: Quantité
+        delta:
+          type: integer
+          readOnly: true
+          title: Variation
+          description: + pour une entrée, – pour une sortie
+        quantity_before:
+          type: integer
+          readOnly: true
+          title: Stock avant
+        quantity_after:
+          type: integer
+          readOnly: true
+          title: Stock après
+        reason:
+          type: string
+          readOnly: true
+          title: Motif / justification
+        lot_number:
+          type: string
+          readOnly: true
+          title: Numéro de lot
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          title: Coût unitaire
+        sale:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Vente
+        sale_number:
+          type: string
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+          title: Effectué par
+        user_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Date
+      required:
+      - article_id
+      - created_at
+      - delta
+      - id
+      - lot_number
+      - movement_type
+      - movement_type_label
+      - quantity
+      - quantity_after
+      - quantity_before
+      - reason
+      - sale
+      - sale_number
+      - sku
+      - unit_cost
+      - user
+      - user_name
+      - variant
+      - variant_label
+    StockMovementCreateMovementTypeEnum:
+      enum:
+      - PURCHASE
+      - CUSTOMER_RETURN
+      - ADJUST_IN
+      - ADJUST_OUT
+      - LOSS
+      - SUPPLIER_RETURN
+      type: string
+      description: |-
+        * `PURCHASE` - Entrée – réception fournisseur
+        * `CUSTOMER_RETURN` - Entrée – retour client
+        * `ADJUST_IN` - Entrée – ajustement d'inventaire
+        * `ADJUST_OUT` - Sortie – ajustement d'inventaire
+        * `LOSS` - Sortie – perte, casse ou vol
+        * `SUPPLIER_RETURN` - Sortie – retour fournisseur
+    StockMovementCreateRequest:
+      type: object
+      properties:
+        variant:
+          type: integer
+        movement_type:
+          allOf:
+          - $ref: '#/components/schemas/StockMovementCreateMovementTypeEnum'
+          description: |-
+            Les ventes et annulations génèrent leurs mouvements automatiquement.
+
+            * `PURCHASE` - Entrée – réception fournisseur
+            * `CUSTOMER_RETURN` - Entrée – retour client
+            * `ADJUST_IN` - Entrée – ajustement d'inventaire
+            * `ADJUST_OUT` - Sortie – ajustement d'inventaire
+            * `LOSS` - Sortie – perte, casse ou vol
+            * `SUPPLIER_RETURN` - Sortie – retour fournisseur
+        quantity:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          default: ''
+          maxLength: 255
+        lot_number:
+          type: string
+          default: ''
+          maxLength: 64
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - movement_type
+      - quantity
+      - variant
+    StockMovementMovementTypeEnum:
+      enum:
+      - PURCHASE
+      - CUSTOMER_RETURN
+      - ADJUST_IN
+      - SALE
+      - SALE_CANCEL
+      - ADJUST_OUT
+      - LOSS
+      - SUPPLIER_RETURN
+      type: string
+      description: |-
+        * `PURCHASE` - Entrée – réception fournisseur
+        * `CUSTOMER_RETURN` - Entrée – retour client
+        * `ADJUST_IN` - Entrée – ajustement d'inventaire
+        * `SALE` - Sortie – vente
+        * `SALE_CANCEL` - Entrée – annulation de vente
+        * `ADJUST_OUT` - Sortie – ajustement d'inventaire
+        * `LOSS` - Sortie – perte, casse ou vol
+        * `SUPPLIER_RETURN` - Sortie – retour fournisseur
+    StockStatusEnum:
+      enum:
+      - OUT
+      - LOW
+      - OK
+      type: string
+      description: |-
+        * `OUT` - OUT
+        * `LOW` - LOW
+        * `OK` - OK
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nom
+          maxLength: 150
+        contact_name:
+          type: string
+          title: Contact
+          maxLength: 150
+        phone:
+          type: string
+          title: Téléphone
+          maxLength: 30
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          title: Adresse
+        notes:
+          type: string
+        is_active:
+          type: boolean
+          title: Actif
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Créé le
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Modifié le
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    SupplierRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nom
+          maxLength: 150
+        contact_name:
+          type: string
+          title: Contact
+          maxLength: 150
+        phone:
+          type: string
+          title: Téléphone
+          maxLength: 30
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          title: Adresse
+        notes:
+          type: string
+        is_active:
+          type: boolean
+          title: Actif
+      required:
+      - name
+    SystemEnum:
+      enum:
+      - AGE
+      - HEIGHT
+      - SHOES
+      - ONE_SIZE
+      - OTHER
+      type: string
+      description: |-
+        * `AGE` - Taille en âge (3M, 4A…)
+        * `HEIGHT` - Taille en cm (86, 104…)
+        * `SHOES` - Pointure
+        * `ONE_SIZE` - Taille unique
+        * `OTHER` - Autre
+    TokenPair:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    TypeEnum:
+      enum:
+      - SALE
+      - SALE_CANCELLED
+      - LOW_STOCK
+      - OUT_OF_STOCK
+      - CASH_REPORT
+      - SENSITIVE_ACTION
+      type: string
+      description: |-
+        * `SALE` - Nouvelle vente
+        * `SALE_CANCELLED` - Vente annulée
+        * `LOW_STOCK` - Stock faible
+        * `OUT_OF_STOCK` - Rupture de stock
+        * `CASH_REPORT` - Compte rendu de caisse
+        * `SENSITIVE_ACTION` - Action sensible
+    UnreadCount:
+      type: object
+      properties:
+        unread:
+          type: integer
+      required:
+      - unread
+    User:
+      type: object
+      description: Profil de l'utilisateur connecté (GET /api/auth/me/).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          title: Nom d’utilisateur
+          description: Requis. 150 caractères maximum. Uniquement des lettres, nombres
+            et les caractères « @ », « . », « + », « - » et « _ ».
+        full_name:
+          type: string
+          readOnly: true
+          title: Nom complet
+        phone:
+          type: string
+          readOnly: true
+          title: Téléphone
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+          title: Rôle
+        role_label:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Actif
+          description: Précise si l’utilisateur doit être considéré comme actif. Décochez
+            ceci plutôt que de supprimer le compte.
+        must_change_password:
+          type: boolean
+          readOnly: true
+          title: Doit changer son mot de passe
+          description: Activé quand l'administrateur crée le compte ou réinitialise
+            le mot de passe.
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Dernière connexion
+        capabilities:
+          type: object
+          additionalProperties:
+            type: boolean
+          readOnly: true
+      required:
+      - capabilities
+      - full_name
+      - id
+      - is_active
+      - last_login
+      - must_change_password
+      - phone
+      - role
+      - role_label
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

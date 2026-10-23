@@ -1,9 +1,20 @@
+# Environnement Python
 .venv/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Secrets et données locales
 .env
 db.sqlite3
 media/
 staticfiles/
+
+# Tests
+.coverage
+htmlcov/
+
+# Éditeurs
 .vscode/
 .idea/
+*.swp

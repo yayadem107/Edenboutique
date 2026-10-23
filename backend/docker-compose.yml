@@ -1,0 +1,37 @@
+# Démarrage complet en développement :  docker compose up --build
+# API : http://localhost:8000/api/   —   Documentation : http://localhost:8000/api/docs/
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edenboutique}
+      POSTGRES_USER: ${POSTGRES_USER:-eden}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      # Dans Docker, la base s'appelle « db » (et non localhost).
+      DATABASE_URL: postgres://${POSTGRES_USER:-eden}:${POSTGRES_PASSWORD:-change-me}@db:5432/${POSTGRES_DB:-edenboutique}
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
